@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script>
+$(document).ready(function(){
+
+var ITERACIONES = 30;
+
+function calculaValorInversion(cuota, interes,  plazos){
+    var ret =0;
+    for(var n=1; n <= plazos; n++){
+        ret += (cuota/ Math.pow( (1+interes), n));
+    }
+    return ret;
+}
+
+
+function closeTo(  a ,  b){
+    var diff = a-b;
+    if( 0 == diff || Math.abs(diff) < 0.01){
+        return 0;
+    }
+    return a < b ? -1 : 1;
+}
+
+function calculaTae(  prestamo,  comision,  plazos ){
+    var forward=true;
+    var interes = 0.001;
+    var step = 0.001;
+    var deep=1;
+
+    var cuota = prestamo / plazos;
+    var objetivo = prestamo - comision;
+    var lastVac=calculaValorInversion( cuota, interes, plazos);
+    for(var iter=0; iter<ITERACIONES; iter++){
+
+        var close = closeTo(lastVac, objetivo);
+        if( close == 0) {
+            var tae = ( Math.pow(1+interes, 12) -1 )*100;
+            return tae;
+        }
+
+        // estamos por encima del objetivo, poco interes,
+        if( close > 0 ){
+            if( !forward ){
+                deep = deep * 10;
+                forward = true;
+            }
+            interes += (step/deep);
+        }
+
+        // estamos por debajo del objetivo, mucho interes
+        if( close < 0 ){
+            // si hay que retrodecer cuando ibamos para adelante hay que profundizar
+            if( forward ){
+                deep = deep * 10;
+                forward = false;
+            }
+            interes -= (step/deep);
+        }
+
+        lastVac=calculaValorInversion( cuota, interes, plazos);
+    }
+
+    return '';
+}
+
+function assertTae(  prestamo,  comision,  plazos,  expected){
+        var tae;
+        if( closeTo(tae=calculaTae(prestamo,comision,plazos), expected) != 0 ){
+            throw "TAE de "+prestamo+" eur a "+plazos+" meses y apertura "+comision+" debia ser "+expected+" pero dice "+tae;
+        }
+    console.log("tae correcta")
+}
+
+//calculamos algunas tae para ver que todo esta bien ?
+        assertTae(500,10,10,4.52);
+        assertTae(500,20,10, 9.37);
+        assertTae(647,10,10, 3.46);
+       assertTae(340,5,5, 6.1044);
+
+    $("button").click(function(){
+        var prestamo = $("#prestamo").val();
+        var comision= $("#comision").val();
+        var plazos = $("#meses").val();
+        var tae=calculaTae(prestamo,comision,plazos);
+        $("#tae").val(tae);
+    });
+});
+</script>
+</head>
+<body>
+<p>
+
+
+<p>Prestamo: <input type="text" id="prestamo" value="400"></p>
+<p>Comision apertura: <input type="text" id="comision" value="10"></p>
+<p>Meses: <input type="text" id="meses" value="10"></p>
+<p>TAE: <input type="text" id="tae" value="" readonly></p>
+
+<p><button>Calcular</button></p>
+
+</body>
+</html>

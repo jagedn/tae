@@ -75,7 +75,7 @@ public class Main {
 	// write your code here
         assertTae(500,10,10,4.52);
         assertTae(500,20,10, 9.37);
-        assertTae(647,10,10, 3.46);
+        assertTae(647,10,10, 3.47);
 
     }
 }
